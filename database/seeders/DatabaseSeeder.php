@@ -2,24 +2,752 @@
 
 namespace Database\Seeders;
 
+use App\Models\Book;
+use App\Models\Cart;
+use App\Models\Category;
+use App\Models\Review;
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
     /**
      * Seed the application's database.
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        // ===== TẠO NGƯỜI DÙNG =====
+        $admin = User::create([
+            'name'      => 'Quản trị viên',
+            'email'     => 'admin@bookhaven.com',
+            'password'  => Hash::make('123456'),
+            'role'      => 'admin',
+            'phone'     => '0901234567',
+            'address'   => '123 Đường Sách, Quận 1, TP. Hồ Chí Minh',
+            'avatar'    => null,
+            'is_active' => true,
         ]);
+
+        $customer = User::create([
+            'name'      => 'Nguyễn Văn An',
+            'email'     => 'user@bookhaven.com',
+            'password'  => Hash::make('123456'),
+            'role'      => 'customer',
+            'phone'     => '0912345678',
+            'address'   => '456 Nguyễn Huệ, Quận 1, TP. Hồ Chí Minh',
+            'avatar'    => null,
+            'is_active' => true,
+        ]);
+
+        $customer2 = User::create([
+            'name'      => 'Trần Thị Bình',
+            'email'     => 'binh@bookhaven.com',
+            'password'  => Hash::make('123456'),
+            'role'      => 'customer',
+            'phone'     => '0923456789',
+            'address'   => '789 Lê Lợi, Quận 3, TP. Hồ Chí Minh',
+            'avatar'    => null,
+            'is_active' => true,
+        ]);
+
+        // ===== TẠO GIỎ HÀNG CHO KHÁCH HÀNG =====
+        Cart::create(['user_id' => $customer->id]);
+        Cart::create(['user_id' => $customer2->id]);
+
+        // ===== TẠO DANH MỤC =====
+        $categories = [
+            [
+                'name'        => 'Văn học Việt Nam',
+                'slug'        => 'van-hoc-viet-nam',
+                'description' => 'Các tác phẩm văn học của các tác giả Việt Nam qua các thời kỳ',
+                'image'       => '/images/categories/van-hoc-viet-nam.jpg',
+                'is_active'   => true,
+            ],
+            [
+                'name'        => 'Văn học nước ngoài',
+                'slug'        => 'van-hoc-nuoc-ngoai',
+                'description' => 'Các tác phẩm văn học nổi tiếng của các tác giả nước ngoài được dịch sang tiếng Việt',
+                'image'       => '/images/categories/van-hoc-nuoc-ngoai.jpg',
+                'is_active'   => true,
+            ],
+            [
+                'name'        => 'Kinh tế',
+                'slug'        => 'kinh-te',
+                'description' => 'Sách về kinh tế, tài chính, đầu tư và quản trị doanh nghiệp',
+                'image'       => '/images/categories/kinh-te.jpg',
+                'is_active'   => true,
+            ],
+            [
+                'name'        => 'Kỹ năng sống',
+                'slug'        => 'ky-nang-song',
+                'description' => 'Sách phát triển bản thân, kỹ năng giao tiếp và tư duy tích cực',
+                'image'       => '/images/categories/ky-nang-song.jpg',
+                'is_active'   => true,
+            ],
+            [
+                'name'        => 'Thiếu nhi',
+                'slug'        => 'thieu-nhi',
+                'description' => 'Sách dành cho trẻ em với nội dung phong phú, hình ảnh sinh động',
+                'image'       => '/images/categories/thieu-nhi.jpg',
+                'is_active'   => true,
+            ],
+            [
+                'name'        => 'Khoa học',
+                'slug'        => 'khoa-hoc',
+                'description' => 'Sách về khoa học tự nhiên, vũ trụ, sinh học và các lĩnh vực khoa học khác',
+                'image'       => '/images/categories/khoa-hoc.jpg',
+                'is_active'   => true,
+            ],
+            [
+                'name'        => 'Công nghệ thông tin',
+                'slug'        => 'cong-nghe-thong-tin',
+                'description' => 'Sách lập trình, phát triển phần mềm, trí tuệ nhân tạo và công nghệ số',
+                'image'       => '/images/categories/cong-nghe-thong-tin.jpg',
+                'is_active'   => true,
+            ],
+            [
+                'name'        => 'Lịch sử',
+                'slug'        => 'lich-su',
+                'description' => 'Sách về lịch sử Việt Nam và thế giới qua các thời kỳ',
+                'image'       => '/images/categories/lich-su.jpg',
+                'is_active'   => true,
+            ],
+        ];
+
+        $createdCategories = [];
+        foreach ($categories as $category) {
+            $createdCategories[$category['slug']] = Category::create($category);
+        }
+
+        // ===== TẠO SÁCH =====
+        $books = [
+            // Văn học Việt Nam (4 cuốn)
+            [
+                'category_id'  => $createdCategories['van-hoc-viet-nam']->id,
+                'title'        => 'Số Đỏ',
+                'slug'         => 'so-do',
+                'author'       => 'Vũ Trọng Phụng',
+                'publisher'    => 'NXB Văn học',
+                'publish_year' => 2020,
+                'description'  => 'Số Đỏ là một tiểu thuyết trào phúng kinh điển của nền văn học Việt Nam hiện đại. Tác phẩm phơi bày sự giả dối, lố lăng của xã hội thực dân nửa phong kiến qua nhân vật Xuân Tóc Đỏ.',
+                'price'        => 89000,
+                'sale_price'   => 72000,
+                'stock'        => 150,
+                'cover_image'  => 'https://placehold.co/400x560/e2e8f0/64748b?text=Book+1',
+                'isbn'         => '978-604-2-10001-1',
+                'pages'        => 312,
+                'is_active'    => true,
+                'is_featured'  => true,
+                'sold_count'   => 320,
+                'view_count'   => 1850,
+            ],
+            [
+                'category_id'  => $createdCategories['van-hoc-viet-nam']->id,
+                'title'        => 'Chí Phèo',
+                'slug'         => 'chi-pheo',
+                'author'       => 'Nam Cao',
+                'publisher'    => 'NXB Văn học',
+                'publish_year' => 2021,
+                'description'  => 'Chí Phèo là truyện ngắn xuất sắc nhất của Nam Cao, kể về bi kịch của người nông dân bị xã hội tha hóa và không được thừa nhận quyền làm người.',
+                'price'        => 65000,
+                'sale_price'   => null,
+                'stock'        => 200,
+                'cover_image'  => 'https://placehold.co/400x560/e2e8f0/64748b?text=Book+2',
+                'isbn'         => '978-604-2-10002-2',
+                'pages'        => 248,
+                'is_active'    => true,
+                'is_featured'  => false,
+                'sold_count'   => 275,
+                'view_count'   => 1420,
+            ],
+            [
+                'category_id'  => $createdCategories['van-hoc-viet-nam']->id,
+                'title'        => 'Đất Rừng Phương Nam',
+                'slug'         => 'dat-rung-phuong-nam',
+                'author'       => 'Đoàn Giỏi',
+                'publisher'    => 'NXB Kim Đồng',
+                'publish_year' => 2022,
+                'description'  => 'Đất Rừng Phương Nam là tiểu thuyết nổi tiếng về thiên nhiên và con người miền Nam Việt Nam, theo chân cậu bé An trong hành trình khám phá vùng đất phương Nam hoang dã.',
+                'price'        => 95000,
+                'sale_price'   => 80000,
+                'stock'        => 180,
+                'cover_image'  => 'https://placehold.co/400x560/e2e8f0/64748b?text=Book+3',
+                'isbn'         => '978-604-2-10003-3',
+                'pages'        => 368,
+                'is_active'    => true,
+                'is_featured'  => true,
+                'sold_count'   => 410,
+                'view_count'   => 2100,
+            ],
+            [
+                'category_id'  => $createdCategories['van-hoc-viet-nam']->id,
+                'title'        => 'Tắt Đèn',
+                'slug'         => 'tat-den',
+                'author'       => 'Ngô Tất Tố',
+                'publisher'    => 'NXB Văn học',
+                'publish_year' => 2019,
+                'description'  => 'Tắt Đèn là tiểu thuyết hiện thực phê phán nổi bật nhất của Ngô Tất Tố, phản ánh cuộc sống cơ cực của người nông dân Việt Nam trước Cách mạng tháng Tám.',
+                'price'        => 75000,
+                'sale_price'   => null,
+                'stock'        => 120,
+                'cover_image'  => 'https://placehold.co/400x560/e2e8f0/64748b?text=Book+4',
+                'isbn'         => '978-604-2-10004-4',
+                'pages'        => 280,
+                'is_active'    => true,
+                'is_featured'  => false,
+                'sold_count'   => 195,
+                'view_count'   => 980,
+            ],
+
+            // Văn học nước ngoài (4 cuốn)
+            [
+                'category_id'  => $createdCategories['van-hoc-nuoc-ngoai']->id,
+                'title'        => 'Nhà Giả Kim',
+                'slug'         => 'nha-gia-kim',
+                'author'       => 'Paulo Coelho',
+                'publisher'    => 'NXB Hội Nhà Văn',
+                'publish_year' => 2023,
+                'description'  => 'Nhà Giả Kim là cuốn tiểu thuyết triết học nổi tiếng nhất của Paulo Coelho, kể về hành trình của một cậu bé người Tây Ban Nha đi tìm kho báu và khám phá ý nghĩa cuộc sống.',
+                'price'        => 115000,
+                'sale_price'   => 95000,
+                'stock'        => 250,
+                'cover_image'  => 'https://placehold.co/400x560/e2e8f0/64748b?text=Book+5',
+                'isbn'         => '978-604-2-20001-1',
+                'pages'        => 228,
+                'is_active'    => true,
+                'is_featured'  => true,
+                'sold_count'   => 680,
+                'view_count'   => 3200,
+            ],
+            [
+                'category_id'  => $createdCategories['van-hoc-nuoc-ngoai']->id,
+                'title'        => 'Đắc Nhân Tâm',
+                'slug'         => 'dac-nhan-tam',
+                'author'       => 'Dale Carnegie',
+                'publisher'    => 'NXB Tổng hợp TP.HCM',
+                'publish_year' => 2022,
+                'description'  => 'Đắc Nhân Tâm là cuốn sách về nghệ thuật giao tiếp và ứng xử với mọi người, được xuất bản lần đầu năm 1936 và đã bán hơn 30 triệu bản trên toàn thế giới.',
+                'price'        => 108000,
+                'sale_price'   => null,
+                'stock'        => 300,
+                'cover_image'  => 'https://placehold.co/400x560/e2e8f0/64748b?text=Book+6',
+                'isbn'         => '978-604-2-20002-2',
+                'pages'        => 320,
+                'is_active'    => true,
+                'is_featured'  => true,
+                'sold_count'   => 920,
+                'view_count'   => 4500,
+            ],
+            [
+                'category_id'  => $createdCategories['van-hoc-nuoc-ngoai']->id,
+                'title'        => 'Người Đua Diều',
+                'slug'         => 'nguoi-dua-dieu',
+                'author'       => 'Khaled Hosseini',
+                'publisher'    => 'NXB Hội Nhà Văn',
+                'publish_year' => 2021,
+                'description'  => 'Người Đua Diều là câu chuyện xúc động về tình bạn, sự phản bội và chuộc lỗi giữa hai cậu bé Afghanistan trên nền bức tranh đất nước bị chiến tranh tàn phá.',
+                'price'        => 135000,
+                'sale_price'   => 110000,
+                'stock'        => 160,
+                'cover_image'  => 'https://placehold.co/400x560/e2e8f0/64748b?text=Book+7',
+                'isbn'         => '978-604-2-20003-3',
+                'pages'        => 436,
+                'is_active'    => true,
+                'is_featured'  => false,
+                'sold_count'   => 345,
+                'view_count'   => 1900,
+            ],
+            [
+                'category_id'  => $createdCategories['van-hoc-nuoc-ngoai']->id,
+                'title'        => 'Hoàng Tử Bé',
+                'slug'         => 'hoang-tu-be',
+                'author'       => 'Antoine de Saint-Exupéry',
+                'publisher'    => 'NXB Văn học',
+                'publish_year' => 2023,
+                'description'  => 'Hoàng Tử Bé là tác phẩm kinh điển dành cho mọi lứa tuổi, kể về một hoàng tử nhỏ từ hành tinh khác đến Trái Đất và gặp gỡ người phi công. Một câu chuyện đầy thơ mộng về tình yêu và ý nghĩa cuộc sống.',
+                'price'        => 79000,
+                'sale_price'   => null,
+                'stock'        => 220,
+                'cover_image'  => 'https://placehold.co/400x560/e2e8f0/64748b?text=Book+8',
+                'isbn'         => '978-604-2-20004-4',
+                'pages'        => 112,
+                'is_active'    => true,
+                'is_featured'  => false,
+                'sold_count'   => 510,
+                'view_count'   => 2750,
+            ],
+
+            // Kinh tế (3 cuốn)
+            [
+                'category_id'  => $createdCategories['kinh-te']->id,
+                'title'        => 'Nghĩ Giàu Làm Giàu',
+                'slug'         => 'nghi-giau-lam-giau',
+                'author'       => 'Napoleon Hill',
+                'publisher'    => 'NXB Lao động - Xã hội',
+                'publish_year' => 2022,
+                'description'  => 'Nghĩ Giàu Làm Giàu là tác phẩm kinh điển về tư duy làm giàu, được Napoleon Hill viết sau hơn 20 năm nghiên cứu những người thành công nhất nước Mỹ.',
+                'price'        => 125000,
+                'sale_price'   => 99000,
+                'stock'        => 200,
+                'cover_image'  => 'https://placehold.co/400x560/e2e8f0/64748b?text=Book+9',
+                'isbn'         => '978-604-2-30001-1',
+                'pages'        => 384,
+                'is_active'    => true,
+                'is_featured'  => true,
+                'sold_count'   => 560,
+                'view_count'   => 2900,
+            ],
+            [
+                'category_id'  => $createdCategories['kinh-te']->id,
+                'title'        => 'Cha Giàu Cha Nghèo',
+                'slug'         => 'cha-giau-cha-ngheo',
+                'author'       => 'Robert T. Kiyosaki',
+                'publisher'    => 'NXB Trẻ',
+                'publish_year' => 2023,
+                'description'  => 'Cha Giàu Cha Nghèo là cuốn sách tài chính cá nhân bán chạy nhất mọi thời đại, chia sẻ triết lý về tiền bạc và đầu tư thông qua câu chuyện về hai người cha.',
+                'price'        => 139000,
+                'sale_price'   => null,
+                'stock'        => 280,
+                'cover_image'  => 'https://placehold.co/400x560/e2e8f0/64748b?text=Book+10',
+                'isbn'         => '978-604-2-30002-2',
+                'pages'        => 336,
+                'is_active'    => true,
+                'is_featured'  => true,
+                'sold_count'   => 780,
+                'view_count'   => 3800,
+            ],
+            [
+                'category_id'  => $createdCategories['kinh-te']->id,
+                'title'        => 'Khởi Nghiệp Tinh Gọn',
+                'slug'         => 'khoi-nghiep-tinh-gon',
+                'author'       => 'Eric Ries',
+                'publisher'    => 'NXB Công Thương',
+                'publish_year' => 2021,
+                'description'  => 'Khởi Nghiệp Tinh Gọn trình bày phương pháp xây dựng doanh nghiệp mới trong điều kiện không chắc chắn, tập trung vào việc học hỏi nhanh và điều chỉnh liên tục.',
+                'price'        => 155000,
+                'sale_price'   => 125000,
+                'stock'        => 140,
+                'cover_image'  => 'https://placehold.co/400x560/e2e8f0/64748b?text=Book+11',
+                'isbn'         => '978-604-2-30003-3',
+                'pages'        => 296,
+                'is_active'    => true,
+                'is_featured'  => false,
+                'sold_count'   => 230,
+                'view_count'   => 1250,
+            ],
+
+            // Kỹ năng sống (3 cuốn)
+            [
+                'category_id'  => $createdCategories['ky-nang-song']->id,
+                'title'        => 'Thói Quen Thứ 7',
+                'slug'         => 'thoi-quen-thu-7',
+                'author'       => 'Stephen R. Covey',
+                'publisher'    => 'NXB Tổng hợp TP.HCM',
+                'publish_year' => 2022,
+                'description'  => '7 Thói Quen Của Người Thành Đạt là cuốn sách phát triển bản thân kinh điển, trình bày 7 nguyên tắc giúp xây dựng tính cách hiệu quả và đạt được thành công bền vững.',
+                'price'        => 145000,
+                'sale_price'   => 119000,
+                'stock'        => 190,
+                'cover_image'  => 'https://placehold.co/400x560/e2e8f0/64748b?text=Book+12',
+                'isbn'         => '978-604-2-40001-1',
+                'pages'        => 448,
+                'is_active'    => true,
+                'is_featured'  => true,
+                'sold_count'   => 490,
+                'view_count'   => 2600,
+            ],
+            [
+                'category_id'  => $createdCategories['ky-nang-song']->id,
+                'title'        => 'Đừng Bao Giờ Đi Ăn Một Mình',
+                'slug'         => 'dung-bao-gio-di-an-mot-minh',
+                'author'       => 'Keith Ferrazzi',
+                'publisher'    => 'NXB Lao động',
+                'publish_year' => 2021,
+                'description'  => 'Cuốn sách chia sẻ bí quyết xây dựng mạng lưới quan hệ rộng lớn và duy trì những mối quan hệ bền vững trong cuộc sống và sự nghiệp.',
+                'price'        => 115000,
+                'sale_price'   => null,
+                'stock'        => 130,
+                'cover_image'  => 'https://placehold.co/400x560/e2e8f0/64748b?text=Book+13',
+                'isbn'         => '978-604-2-40002-2',
+                'pages'        => 352,
+                'is_active'    => true,
+                'is_featured'  => false,
+                'sold_count'   => 180,
+                'view_count'   => 950,
+            ],
+            [
+                'category_id'  => $createdCategories['ky-nang-song']->id,
+                'title'        => 'Sức Mạnh Của Thói Quen',
+                'slug'         => 'suc-manh-cua-thoi-quen',
+                'author'       => 'Charles Duhigg',
+                'publisher'    => 'NXB Lao động - Xã hội',
+                'publish_year' => 2023,
+                'description'  => 'Sức Mạnh Của Thói Quen khám phá khoa học đằng sau việc hình thành thói quen và cách con người, doanh nghiệp có thể tận dụng chúng để thay đổi cuộc sống.',
+                'price'        => 129000,
+                'sale_price'   => 105000,
+                'stock'        => 165,
+                'cover_image'  => 'https://placehold.co/400x560/e2e8f0/64748b?text=Book+14',
+                'isbn'         => '978-604-2-40003-3',
+                'pages'        => 408,
+                'is_active'    => true,
+                'is_featured'  => false,
+                'sold_count'   => 310,
+                'view_count'   => 1680,
+            ],
+
+            // Thiếu nhi (3 cuốn)
+            [
+                'category_id'  => $createdCategories['thieu-nhi']->id,
+                'title'        => 'Doremon - Tập 1',
+                'slug'         => 'doremon-tap-1',
+                'author'       => 'Fujiko F. Fujio',
+                'publisher'    => 'NXB Kim Đồng',
+                'publish_year' => 2023,
+                'description'  => 'Doraemon là bộ truyện tranh nổi tiếng nhất thế giới về chú mèo máy đến từ tương lai, giúp đỡ cậu bé Nobita với những món bảo bối thần kỳ.',
+                'price'        => 28000,
+                'sale_price'   => null,
+                'stock'        => 500,
+                'cover_image'  => 'https://placehold.co/400x560/e2e8f0/64748b?text=Book+15',
+                'isbn'         => '978-604-2-50001-1',
+                'pages'        => 188,
+                'is_active'    => true,
+                'is_featured'  => true,
+                'sold_count'   => 1200,
+                'view_count'   => 5500,
+            ],
+            [
+                'category_id'  => $createdCategories['thieu-nhi']->id,
+                'title'        => 'Harry Potter Và Hòn Đá Phù Thủy',
+                'slug'         => 'harry-potter-va-hon-da-phu-thuy',
+                'author'       => 'J.K. Rowling',
+                'publisher'    => 'NXB Trẻ',
+                'publish_year' => 2022,
+                'description'  => 'Harry Potter và Hòn Đá Phù Thủy là cuốn đầu tiên trong bộ truyện Harry Potter huyền thoại, kể về cậu bé phù thủy Harry và những cuộc phiêu lưu tại trường Hogwarts.',
+                'price'        => 185000,
+                'sale_price'   => 155000,
+                'stock'        => 240,
+                'cover_image'  => 'https://placehold.co/400x560/e2e8f0/64748b?text=Book+16',
+                'isbn'         => '978-604-2-50002-2',
+                'pages'        => 432,
+                'is_active'    => true,
+                'is_featured'  => true,
+                'sold_count'   => 870,
+                'view_count'   => 4200,
+            ],
+            [
+                'category_id'  => $createdCategories['thieu-nhi']->id,
+                'title'        => 'Dế Mèn Phiêu Lưu Ký',
+                'slug'         => 'de-men-phieu-luu-ky',
+                'author'       => 'Tô Hoài',
+                'publisher'    => 'NXB Kim Đồng',
+                'publish_year' => 2021,
+                'description'  => 'Dế Mèn Phiêu Lưu Ký là tác phẩm văn học thiếu nhi kinh điển của Việt Nam, kể về những cuộc phiêu lưu của chú dế mèn kiêu ngạo và quá trình trưởng thành của nhân vật.',
+                'price'        => 68000,
+                'sale_price'   => null,
+                'stock'        => 310,
+                'cover_image'  => 'https://placehold.co/400x560/e2e8f0/64748b?text=Book+17',
+                'isbn'         => '978-604-2-50003-3',
+                'pages'        => 208,
+                'is_active'    => true,
+                'is_featured'  => false,
+                'sold_count'   => 650,
+                'view_count'   => 3100,
+            ],
+
+            // Khoa học (3 cuốn)
+            [
+                'category_id'  => $createdCategories['khoa-hoc']->id,
+                'title'        => 'Lược Sử Thời Gian',
+                'slug'         => 'luoc-su-thoi-gian',
+                'author'       => 'Stephen Hawking',
+                'publisher'    => 'NXB Trẻ',
+                'publish_year' => 2020,
+                'description'  => 'Lược Sử Thời Gian là cuốn sách khoa học phổ thông nổi tiếng nhất thế giới của Stephen Hawking, giải thích các khái niệm vũ trụ học phức tạp bằng ngôn ngữ dễ hiểu.',
+                'price'        => 149000,
+                'sale_price'   => 120000,
+                'stock'        => 175,
+                'cover_image'  => 'https://placehold.co/400x560/e2e8f0/64748b?text=Book+18',
+                'isbn'         => '978-604-2-60001-1',
+                'pages'        => 264,
+                'is_active'    => true,
+                'is_featured'  => true,
+                'sold_count'   => 420,
+                'view_count'   => 2200,
+            ],
+            [
+                'category_id'  => $createdCategories['khoa-hoc']->id,
+                'title'        => 'Sapiens: Lược Sử Loài Người',
+                'slug'         => 'sapiens-luoc-su-loai-nguoi',
+                'author'       => 'Yuval Noah Harari',
+                'publisher'    => 'NXB Tri thức',
+                'publish_year' => 2023,
+                'description'  => 'Sapiens mang đến cái nhìn toàn cảnh về lịch sử loài người từ thuở hồng hoang đến thời đại hiện nay, giải thích tại sao Homo Sapiens trở thành loài thống trị Trái Đất.',
+                'price'        => 219000,
+                'sale_price'   => 180000,
+                'stock'        => 200,
+                'cover_image'  => 'https://placehold.co/400x560/e2e8f0/64748b?text=Book+19',
+                'isbn'         => '978-604-2-60002-2',
+                'pages'        => 560,
+                'is_active'    => true,
+                'is_featured'  => true,
+                'sold_count'   => 590,
+                'view_count'   => 3050,
+            ],
+            [
+                'category_id'  => $createdCategories['khoa-hoc']->id,
+                'title'        => 'Vũ Trụ Trong Vỏ Hạt Dẻ',
+                'slug'         => 'vu-tru-trong-vo-hat-de',
+                'author'       => 'Stephen Hawking',
+                'publisher'    => 'NXB Trẻ',
+                'publish_year' => 2021,
+                'description'  => 'Vũ Trụ Trong Vỏ Hạt Dẻ là phần tiếp theo của Lược Sử Thời Gian, trình bày những lý thuyết mới nhất về vũ trụ với hình minh họa đầy sắc màu và sinh động.',
+                'price'        => 195000,
+                'sale_price'   => null,
+                'stock'        => 110,
+                'cover_image'  => 'https://placehold.co/400x560/e2e8f0/64748b?text=Book+20',
+                'isbn'         => '978-604-2-60003-3',
+                'pages'        => 216,
+                'is_active'    => true,
+                'is_featured'  => false,
+                'sold_count'   => 180,
+                'view_count'   => 980,
+            ],
+
+            // Công nghệ thông tin (3 cuốn)
+            [
+                'category_id'  => $createdCategories['cong-nghe-thong-tin']->id,
+                'title'        => 'Lập Trình Python Cơ Bản',
+                'slug'         => 'lap-trinh-python-co-ban',
+                'author'       => 'Nguyễn Thị Minh Ngọc',
+                'publisher'    => 'NXB Khoa học Kỹ thuật',
+                'publish_year' => 2023,
+                'description'  => 'Cuốn sách hướng dẫn học Python từ căn bản, phù hợp cho người mới bắt đầu. Bao gồm các bài tập thực hành và dự án thực tế giúp người học nắm vững ngôn ngữ lập trình Python.',
+                'price'        => 185000,
+                'sale_price'   => 149000,
+                'stock'        => 220,
+                'cover_image'  => 'https://placehold.co/400x560/e2e8f0/64748b?text=Book+21',
+                'isbn'         => '978-604-2-70001-1',
+                'pages'        => 496,
+                'is_active'    => true,
+                'is_featured'  => true,
+                'sold_count'   => 380,
+                'view_count'   => 2050,
+            ],
+            [
+                'category_id'  => $createdCategories['cong-nghe-thong-tin']->id,
+                'title'        => 'Trí Tuệ Nhân Tạo: Từ Lý Thuyết Đến Thực Hành',
+                'slug'         => 'tri-tue-nhan-tao-tu-ly-thuyet-den-thuc-hanh',
+                'author'       => 'Lê Hoàng Tuấn',
+                'publisher'    => 'NXB Đại học Quốc gia TP.HCM',
+                'publish_year' => 2022,
+                'description'  => 'Cuốn sách cung cấp kiến thức toàn diện về trí tuệ nhân tạo và học máy, từ các thuật toán cơ bản đến ứng dụng thực tế trong doanh nghiệp và đời sống.',
+                'price'        => 249000,
+                'sale_price'   => 199000,
+                'stock'        => 150,
+                'cover_image'  => 'https://placehold.co/400x560/e2e8f0/64748b?text=Book+22',
+                'isbn'         => '978-604-2-70002-2',
+                'pages'        => 528,
+                'is_active'    => true,
+                'is_featured'  => true,
+                'sold_count'   => 290,
+                'view_count'   => 1650,
+            ],
+            [
+                'category_id'  => $createdCategories['cong-nghe-thong-tin']->id,
+                'title'        => 'Thiết Kế Web Hiện Đại Với HTML & CSS',
+                'slug'         => 'thiet-ke-web-hien-dai-voi-html-css',
+                'author'       => 'Phạm Quang Huy',
+                'publisher'    => 'NXB Thông tin và Truyền thông',
+                'publish_year' => 2023,
+                'description'  => 'Sách hướng dẫn thiết kế giao diện web đẹp và hiện đại sử dụng HTML5, CSS3 và các kỹ thuật responsive design, phù hợp cho lập trình viên muốn nâng cao kỹ năng frontend.',
+                'price'        => 175000,
+                'sale_price'   => null,
+                'stock'        => 185,
+                'cover_image'  => 'https://placehold.co/400x560/e2e8f0/64748b?text=Book+23',
+                'isbn'         => '978-604-2-70003-3',
+                'pages'        => 468,
+                'is_active'    => true,
+                'is_featured'  => false,
+                'sold_count'   => 210,
+                'view_count'   => 1120,
+            ],
+
+            // Lịch sử (2 cuốn)
+            [
+                'category_id'  => $createdCategories['lich-su']->id,
+                'title'        => 'Việt Nam Sử Lược',
+                'slug'         => 'viet-nam-su-luoc',
+                'author'       => 'Trần Trọng Kim',
+                'publisher'    => 'NXB Văn học',
+                'publish_year' => 2020,
+                'description'  => 'Việt Nam Sử Lược là bộ sách lịch sử Việt Nam toàn diện và có hệ thống đầu tiên được viết bằng chữ quốc ngữ, trình bày lịch sử dân tộc từ thời thượng cổ đến đầu thế kỷ XX.',
+                'price'        => 155000,
+                'sale_price'   => 125000,
+                'stock'        => 145,
+                'cover_image'  => 'https://placehold.co/400x560/e2e8f0/64748b?text=Book+24',
+                'isbn'         => '978-604-2-80001-1',
+                'pages'        => 612,
+                'is_active'    => true,
+                'is_featured'  => true,
+                'sold_count'   => 340,
+                'view_count'   => 1780,
+            ],
+            [
+                'category_id'  => $createdCategories['lich-su']->id,
+                'title'        => 'Lịch Sử Thế Giới Cổ Đại',
+                'slug'         => 'lich-su-the-gioi-co-dai',
+                'author'       => 'Chiêm Tế',
+                'publisher'    => 'NXB Giáo dục Việt Nam',
+                'publish_year' => 2019,
+                'description'  => 'Cuốn sách trình bày toàn cảnh lịch sử các nền văn minh lớn của thế giới cổ đại như Ai Cập, Mesopotamia, Hy Lạp, La Mã và các nền văn minh phương Đông.',
+                'price'        => 195000,
+                'sale_price'   => null,
+                'stock'        => 95,
+                'cover_image'  => 'https://placehold.co/400x560/e2e8f0/64748b?text=Book+25',
+                'isbn'         => '978-604-2-80002-2',
+                'pages'        => 724,
+                'is_active'    => true,
+                'is_featured'  => false,
+                'sold_count'   => 165,
+                'view_count'   => 890,
+            ],
+        ];
+
+        $createdBooks = [];
+        foreach ($books as $book) {
+            $createdBooks[] = Book::create($book);
+        }
+
+        // ===== TẠO ĐÁNH GIÁ =====
+        $reviews = [
+            // Đánh giá cho Số Đỏ
+            [
+                'user_id'     => $customer->id,
+                'book_id'     => $createdBooks[0]->id,
+                'rating'      => 5,
+                'comment'     => 'Tác phẩm kinh điển của văn học Việt Nam! Vũ Trọng Phụng đã khắc họa rất chân thực và hài hước bộ mặt xã hội lúc bấy giờ. Đọc xong vẫn còn cảm giác vừa buồn vừa cười.',
+                'is_approved' => true,
+            ],
+            [
+                'user_id'     => $customer2->id,
+                'book_id'     => $createdBooks[0]->id,
+                'rating'      => 4,
+                'comment'     => 'Cuốn sách rất hay, văn phong dí dỏm và sắc bén. Nhân vật Xuân Tóc Đỏ quá ấn tượng. Giao hàng nhanh, sách đóng gói cẩn thận.',
+                'is_approved' => true,
+            ],
+
+            // Đánh giá cho Nhà Giả Kim
+            [
+                'user_id'     => $customer->id,
+                'book_id'     => $createdBooks[4]->id,
+                'rating'      => 5,
+                'comment'     => 'Cuốn sách thay đổi cách nhìn của tôi về cuộc sống. "Khi bạn thực sự muốn điều gì đó, cả vũ trụ sẽ hợp lực giúp bạn đạt được nó." Câu này đọc xong cứ ngẫm mãi.',
+                'is_approved' => true,
+            ],
+            [
+                'user_id'     => $customer2->id,
+                'book_id'     => $createdBooks[4]->id,
+                'rating'      => 5,
+                'comment'     => 'Đã đọc đi đọc lại nhiều lần, mỗi lần lại tìm ra thêm nhiều ý nghĩa sâu sắc mới. Đây là cuốn sách mà ai cũng nên đọc ít nhất một lần trong đời.',
+                'is_approved' => true,
+            ],
+
+            // Đánh giá cho Đắc Nhân Tâm
+            [
+                'user_id'     => $customer->id,
+                'book_id'     => $createdBooks[5]->id,
+                'rating'      => 5,
+                'comment'     => 'Kiệt tác về nghệ thuật giao tiếp! Áp dụng những nguyên tắc trong sách vào thực tế thấy hiệu quả rõ rệt. Mối quan hệ với đồng nghiệp và bạn bè trở nên tốt hơn hẳn.',
+                'is_approved' => true,
+            ],
+            [
+                'user_id'     => $customer2->id,
+                'book_id'     => $createdBooks[5]->id,
+                'rating'      => 4,
+                'comment'     => 'Nội dung rất bổ ích và thực tế. Mặc dù được viết từ gần 100 năm trước nhưng vẫn còn rất nhiều giá trị áp dụng được trong thời đại hiện nay.',
+                'is_approved' => true,
+            ],
+
+            // Đánh giá cho Cha Giàu Cha Nghèo
+            [
+                'user_id'     => $customer->id,
+                'book_id'     => $createdBooks[9]->id,
+                'rating'      => 5,
+                'comment'     => 'Cuốn sách mở ra cách nhìn hoàn toàn mới về tài chính cá nhân. Sau khi đọc xong tôi bắt đầu chú ý hơn đến việc đầu tư và xây dựng tài sản thay vì chỉ đi làm thuê.',
+                'is_approved' => true,
+            ],
+
+            // Đánh giá cho Doremon
+            [
+                'user_id'     => $customer2->id,
+                'book_id'     => $createdBooks[14]->id,
+                'rating'      => 5,
+                'comment'     => 'Mua cho con trai đọc, bé rất thích! Hình ảnh đẹp, giấy tốt. Doraemon mãi là tuổi thơ của bao thế hệ người Việt.',
+                'is_approved' => true,
+            ],
+
+            // Đánh giá cho Harry Potter
+            [
+                'user_id'     => $customer->id,
+                'book_id'     => $createdBooks[15]->id,
+                'rating'      => 5,
+                'comment'     => 'Bản dịch tiếng Việt rất tốt, giữ được hết cái hay của nguyên tác. Đây là tập đầu tiên mua cho con gái, bé đọc xong đòi mua tiếp ngay tập 2!',
+                'is_approved' => true,
+            ],
+            [
+                'user_id'     => $customer2->id,
+                'book_id'     => $createdBooks[15]->id,
+                'rating'      => 4,
+                'comment'     => 'Sách đẹp, bìa cứng chất lượng cao. Nội dung hấp dẫn từ đầu đến cuối. Chỉ tiếc là giá hơi cao một chút.',
+                'is_approved' => true,
+            ],
+
+            // Đánh giá cho Sapiens
+            [
+                'user_id'     => $customer->id,
+                'book_id'     => $createdBooks[19]->id,
+                'rating'      => 5,
+                'comment'     => 'Một trong những cuốn sách xuất sắc nhất tôi từng đọc. Harari đã kể lại lịch sử loài người theo một cách hoàn toàn mới mẻ và vô cùng thú vị. Đọc xong thấy mình hiểu hơn về thế giới.',
+                'is_approved' => true,
+            ],
+            [
+                'user_id'     => $customer2->id,
+                'book_id'     => $createdBooks[19]->id,
+                'rating'      => 5,
+                'comment'     => 'Tuyệt vời! Cuốn sách giúp tôi hiểu tại sao loài người lại có thể làm chủ được Trái Đất. Phần về ngôn ngữ và tôn giáo đặc biệt ấn tượng.',
+                'is_approved' => true,
+            ],
+
+            // Đánh giá cho Việt Nam Sử Lược
+            [
+                'user_id'     => $customer->id,
+                'book_id'     => $createdBooks[23]->id,
+                'rating'      => 5,
+                'comment'     => 'Tác phẩm đồ sộ và có giá trị lớn về mặt lịch sử. Là người Việt Nam mà chưa đọc cuốn này thì thực sự đáng tiếc. Trình bày mạch lạc, dễ theo dõi.',
+                'is_approved' => true,
+            ],
+            [
+                'user_id'     => $customer2->id,
+                'book_id'     => $createdBooks[23]->id,
+                'rating'      => 4,
+                'comment'     => 'Rất bổ ích cho việc tìm hiểu lịch sử nước nhà. Sách dày nhưng đọc không thấy chán vì cách viết của Trần Trọng Kim rất thu hút.',
+                'is_approved' => true,
+            ],
+        ];
+
+        foreach ($reviews as $review) {
+            Review::create($review);
+        }
+
+        $this->command->info('✓ Đã tạo 2 người dùng (admin + khách hàng) và 1 tài khoản khách hàng phụ');
+        $this->command->info('✓ Đã tạo 8 danh mục sách');
+        $this->command->info('✓ Đã tạo 25 đầu sách với đầy đủ thông tin');
+        $this->command->info('✓ Đã tạo 14 đánh giá cho các đầu sách');
+        $this->command->info('');
+        $this->command->info('Thông tin đăng nhập:');
+        $this->command->info('  Admin    → admin@bookhaven.com / 123456');
+        $this->command->info('  Khách hàng → user@bookhaven.com / 123456');
     }
 }
