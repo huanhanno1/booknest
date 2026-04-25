@@ -17,10 +17,12 @@ use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
 
+
 // Public routes
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/sach', [BookController::class, 'index'])->name('books.index');
 Route::get('/sach/{slug}', [BookController::class, 'show'])->name('books.show');
+Route::get('/auto-images', [BookController::class, 'autoUpdateImages']);
 
 // Auth routes
 Route::middleware('guest')->group(function () {

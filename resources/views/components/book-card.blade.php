@@ -4,16 +4,14 @@
     {{-- Ảnh bìa --}}
     <div class="card-img-wrap">
         <a href="{{ route('books.show', $book->slug) }}" style="display:block;">
-            @if($book->cover_image)
-                <img src="{{ $book->cover_image_url }}"
-                     class="card-img-top"
-                     alt="{{ $book->title }}"
-                     loading="lazy">
-            @else
-                <div class="book-placeholder">
-                    <i class="bi bi-book"></i>
-                </div>
-            @endif
+            
+            <img src="{{ $book->cover_image ?? 'https://via.placeholder.com/200x300?text=No+Image' }}"
+                 class="card-img-top"
+                 alt="{{ $book->title }}"
+                 loading="lazy"
+                 style="width:100%; height:220px; object-fit:cover; border-radius:6px;"
+                 onerror="this.src='https://via.placeholder.com/200x300?text=No+Image'">
+
         </a>
 
         {{-- Badge giảm giá --}}
@@ -25,10 +23,11 @@
 
     {{-- Thông tin --}}
     <div class="card-body">
+
         {{-- Danh mục --}}
         @if($book->category)
             <div style="margin-bottom:5px;">
-                <span style="font-size:0.7rem; font-weight:600; color:var(--primary); text-transform:uppercase; letter-spacing:0.4px;">
+                <span style="font-size:0.7rem; font-weight:600; color:var(--primary); text-transform:uppercase;">
                     {{ $book->category->name }}
                 </span>
             </div>
@@ -44,7 +43,7 @@
             <i class="bi bi-person me-1"></i>{{ $book->author }}
         </div>
 
-        {{-- Giá & nút --}}
+        {{-- Giá --}}
         <div class="book-price-wrap mt-auto pt-2">
             @if($book->sale_price)
                 <div class="d-flex align-items-baseline gap-1 flex-wrap">

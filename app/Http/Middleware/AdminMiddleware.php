@@ -10,10 +10,12 @@ class AdminMiddleware
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if (!auth()->check() || auth()->user()->role !== 'admin') {
-            return redirect()->route('home')->with('error', 'Bạn không có quyền truy cập trang này.');
+        // Kiểm tra nếu đăng nhập và có quyền admin (giả sử cột role của bạn là 1 hoặc 'admin')
+        if (auth()->check() && auth()->user()->role == 'admin') {
+            return $next($request);
         }
 
-        return $next($request);
+        // Nếu không phải admin thì đuổi về trang chủ hoặc báo lỗi 403
+        abort(403, 'Bạn không có quyền truy cập trang này.');
     }
 }

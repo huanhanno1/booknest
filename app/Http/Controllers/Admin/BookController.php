@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Book;
 use App\Models\Category;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 class BookController extends Controller
@@ -46,24 +46,14 @@ class BookController extends Controller
             'title'        => 'required|string|max:255',
             'category_id'  => 'required|exists:categories,id',
             'author'       => 'required|string|max:100',
-            'publisher'    => 'nullable|string|max:100',
-            'publish_year' => 'nullable|integer|min:1000|max:' . date('Y'),
-            'description'  => 'nullable|string',
             'price'        => 'required|numeric|min:0',
-            'sale_price'   => 'nullable|numeric|min:0|lt:price',
             'stock'        => 'required|integer|min:0',
-            'isbn'         => 'nullable|string|max:20|unique:books,isbn',
-            'pages'        => 'nullable|integer|min:1',
-            'is_active'    => 'boolean',
-            'is_featured'  => 'boolean',
             'cover_image'  => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
         $data = $request->except(['cover_image', '_token']);
-        $data['is_active']   = $request->boolean('is_active', true);
-        $data['is_featured'] = $request->boolean('is_featured', false);
 
-        // Tạo slug
+        // slug
         $slug = Str::slug($request->title);
         $originalSlug = $slug;
         $count = 1;
@@ -72,20 +62,16 @@ class BookController extends Controller
         }
         $data['slug'] = $slug;
 
-        // Upload ảnh bìa
+        // 🔥 Ưu tiên upload, không có thì auto lấy ảnh
         if ($request->hasFile('cover_image')) {
             $data['cover_image'] = $this->uploadImage($request->file('cover_image'));
+        } else {
+            $data['cover_image'] = $this->getBookImage($request->title, $request->author);
         }
 
         Book::create($data);
 
-        return redirect()->route('admin.books.index')->with('success', 'Sách đã được thêm thành công.');
-    }
-
-    public function show(Book $book)
-    {
-        $book->load('category', 'reviews.user');
-        return view('admin.books.show', compact('book'));
+        return redirect()->route('admin.books.index')->with('success', 'Sách đã được thêm.');
     }
 
     public function edit(Book $book)
@@ -96,69 +82,86 @@ class BookController extends Controller
 
     public function update(Request $request, Book $book)
     {
-        $request->validate([
-            'title'        => 'required|string|max:255',
-            'category_id'  => 'required|exists:categories,id',
-            'author'       => 'required|string|max:100',
-            'publisher'    => 'nullable|string|max:100',
-            'publish_year' => 'nullable|integer|min:1000|max:' . date('Y'),
-            'description'  => 'nullable|string',
-            'price'        => 'required|numeric|min:0',
-            'sale_price'   => 'nullable|numeric|min:0',
-            'stock'        => 'required|integer|min:0',
-            'isbn'         => 'nullable|string|max:20|unique:books,isbn,' . $book->id,
-            'pages'        => 'nullable|integer|min:1',
-            'is_active'    => 'boolean',
-            'is_featured'  => 'boolean',
-            'cover_image'  => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
-        ]);
-
         $data = $request->except(['cover_image', '_token', '_method']);
-        $data['is_active']   = $request->boolean('is_active', true);
-        $data['is_featured'] = $request->boolean('is_featured', false);
 
-        // Cập nhật slug nếu title thay đổi
-        if ($request->title !== $book->title) {
-            $slug = Str::slug($request->title);
-            $originalSlug = $slug;
-            $count = 1;
-            while (Book::where('slug', $slug)->where('id', '!=', $book->id)->exists()) {
-                $slug = $originalSlug . '-' . $count++;
-            }
-            $data['slug'] = $slug;
-        }
-
-        // Upload ảnh bìa mới
+        // upload mới
         if ($request->hasFile('cover_image')) {
-            // Xóa ảnh cũ nếu là ảnh local
             if ($book->cover_image && str_starts_with($book->cover_image, 'uploads/')) {
                 $oldPath = public_path($book->cover_image);
-                if (file_exists($oldPath)) {
-                    unlink($oldPath);
-                }
+                if (file_exists($oldPath)) unlink($oldPath);
             }
+
             $data['cover_image'] = $this->uploadImage($request->file('cover_image'));
         }
 
         $book->update($data);
 
-        return redirect()->route('admin.books.index')->with('success', 'Sách đã được cập nhật thành công.');
+        return redirect()->route('admin.books.index')->with('success', 'Cập nhật thành công.');
     }
 
     public function destroy(Book $book)
     {
         if ($book->cover_image && str_starts_with($book->cover_image, 'uploads/')) {
             $oldPath = public_path($book->cover_image);
-            if (file_exists($oldPath)) {
-                unlink($oldPath);
-            }
+            if (file_exists($oldPath)) unlink($oldPath);
         }
 
         $book->delete();
 
-        return redirect()->route('admin.books.index')->with('success', 'Sách đã được xóa.');
+        return back()->with('success', 'Đã xóa.');
     }
 
+    // =========================
+    // 🔥 GOOGLE BOOKS API
+    // =========================
+    private function getBookImage($title, $author = null)
+    {
+        try {
+            $query = 'intitle:' . $title;
+
+            if ($author) {
+                $query .= '+inauthor:' . $author;
+            }
+
+            $response = Http::get('https://www.googleapis.com/books/v1/volumes', [
+                'q' => $query,
+                'maxResults' => 1
+            ]);
+
+            $data = $response->json();
+
+            if (!empty($data['items'][0]['volumeInfo']['imageLinks']['thumbnail'])) {
+                return $data['items'][0]['volumeInfo']['imageLinks']['thumbnail'];
+            }
+
+        } catch (\Exception $e) {
+            // lỗi thì fallback
+        }
+
+        return 'https://via.placeholder.com/200x300?text=No+Image';
+    }
+
+    // =========================
+    // 🔥 AUTO UPDATE 100 SÁCH
+    // =========================
+    public function autoUpdateImages()
+    {
+        $books = Book::all();
+
+        foreach ($books as $book) {
+            if (!$book->cover_image || str_contains($book->cover_image, 'placeholder')) {
+
+                $book->cover_image = $this->getBookImage($book->title, $book->author);
+                $book->save();
+
+                sleep(1); // tránh bị block API
+            }
+        }
+
+        return "DONE update ảnh!";
+    }
+
+    // =========================
     private function uploadImage($file): string
     {
         $uploadDir = public_path('uploads/books');
